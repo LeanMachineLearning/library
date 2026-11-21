@@ -98,7 +98,7 @@ href = "https://github.com/LeanMachineLearning/LMLRoadmaps"
 [[contribute.ways]]
 title = "Formalize your paper"
 text = "Start from the paper template and its Claude Code plugin."
-href = "https://github.com/LeanMachineLearning/lml-paper-template"
+href = "https://leanmachinelearning.org/formalize/"
 [[contribute.ways]]
 title = "Bring material to LML"
 text = "Propose reviewed definitions and theorems for the core."
