@@ -220,7 +220,7 @@ jobs:
       - name: Install referee-site
         run: |
           python3 -m venv "$RUNNER_TEMP/venv"
-          "$RUNNER_TEMP/venv/bin/pip" install --quiet "referee-site @ git+https://github.com/LeanTrustBuilders/referee-site@v0.14.2"
+          "$RUNNER_TEMP/venv/bin/pip" install --quiet "referee-site @ git+https://github.com/LeanTrustBuilders/referee-site@v0.14.3"
 
       # The roadmaps, as plans; the literature annotations, from LMLExplore's own script run on the
       # three libraries' dataset (its published ones if that fails); the papers, as LMLExplore's site
