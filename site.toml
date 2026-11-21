@@ -1,0 +1,105 @@
+# The library site of Lean Machine Learning (referee-site library --config site.toml).
+
+title = "What is formalized in Lean Machine Learning"
+brand = "Lean Machine Learning"
+home = "https://leanmachinelearning.org/"
+intro = "Definitions and theorems of machine learning theory, with every proof checked by Lean. Search in words, or browse by topic, by the literature, or by the papers built on the libraries."
+about = "Lean checks every proof, whoever wrote it. What still needs a person is whether each statement, and the definitions under it, say what they should. Every page shows which library a result comes from, and who has reviewed what it rests on."
+libraries_title = "Three libraries, one site"
+topics = "topics.toml"
+# Packages trusted with everything they depend on: their declarations are not drawn in graphs.
+trust = ["mathlib"]
+tries = ["regret of UCB", "testing by betting", "chain rule for the Kullback–Leibler divergence", "policy iteration", "lower bound for best-arm identification"]
+
+[[nav]]
+label = "LML Core"
+href = "https://leanmachinelearning.org/#goals"
+[[nav]]
+label = "Tutorials"
+href = "https://leanmachinelearning.org/LML/tutorial"
+[[nav]]
+label = "Library"
+href = "https://leanmachinelearning.org/library/"
+here = true
+[[nav]]
+label = "Roadmap"
+href = "https://leanmachinelearning.org/roadmap"
+[[nav]]
+label = "Zulip"
+href = "https://leanprover.zulipchat.com/#narrow/channel/600045-Lean-Machine-Learning"
+[[nav]]
+label = "API Docs"
+href = "https://leanmachinelearning.org/LML/docs"
+[[nav]]
+label = "GitHub"
+href = "https://github.com/LeanMachineLearning"
+
+[[section]]
+id = "learning"
+title = "Learning"
+[[section]]
+id = "statistics"
+title = "Statistics"
+[[section]]
+id = "tools"
+title = "Mathematical tools"
+
+# The libraries, each a package of the dataset, in the order the site shows them. `store` is where
+# its declarations are reviewed; `kind` how it is written: people, ai or other.
+[[library]]
+name = "LML"
+package = "LeanMachineLearning"
+repo = "LeanMachineLearning/LML"
+store = "LeanMachineLearning/LML-evidence"
+kind = "people"
+process = "Reviewed by its maintainers before merging"
+summary = "The curated core: the objects of machine learning theory and the main theorems about them. Every change is reviewed by people before it is merged."
+
+[[library]]
+name = "LMLExplore"
+package = "LMLExplore"
+repo = "LeanMachineLearning/LMLExplore"
+store = "LeanMachineLearning/LMLExplore-evidence"
+kind = "ai"
+process = "Written by AI agents, along roadmaps written by people"
+summary = "Machine learning theory written by AI agents and merged after AI review once Lean checks it. Whether a statement says the right thing is shown on its page, with any reviews."
+
+[[library]]
+name = "Statlib"
+package = "Statlib"
+repo = "stat-lib/statlib"
+store = "LeanMachineLearning/LML-evidence"
+kind = "other"
+process = "The statistics library of the stat-lib project"
+summary = "Mathematical statistics, which LML builds on: divergences, hypothesis testing, e-values."
+
+# Upstream packages drawn in graphs, as the site names them.
+[[upstream]]
+package = "TauCeti"
+name = "Tau Ceti"
+kind = "ai"
+note = "written by AI, not audited here"
+
+[contribute]
+intro = "Lean Machine Learning grows through people who say whether statements are right, people who write the roadmaps, and AI agents run by anyone."
+workerTitle = "Run a worker, in two lines"
+worker = ["uv tool install git+https://github.com/TauCetiProject/TauCetiWorker",
+          "tauceti --conf https://raw.githubusercontent.com/LeanMachineLearning/LMLExplore/main/tauceti.toml work --loop"]
+workerText = "The worker uses your Claude or Codex subscription and opens pull requests on LMLExplore from your own GitHub account. Each round it picks one job: a review, a fix, or a new item of a roadmap. [Prerequisites, and one round first](https://github.com/LeanMachineLearning/LMLExplore#contributing)."
+
+[[contribute.ways]]
+title = "Review a statement"
+text = "Is it correctly stated? Answer yes or no in a short GitHub form. No Lean needed."
+href = "#/contribute"
+[[contribute.ways]]
+title = "Write or review a roadmap"
+text = "Decide what LMLExplore formalizes next, in your area."
+href = "https://github.com/LeanMachineLearning/LMLRoadmaps"
+[[contribute.ways]]
+title = "Formalize your paper"
+text = "Start from the paper template and its Claude Code plugin."
+href = "https://github.com/LeanMachineLearning/lml-paper-template"
+[[contribute.ways]]
+title = "Bring material to LML"
+text = "Propose reviewed definitions and theorems for the core."
+href = "https://github.com/LeanMachineLearning/LML/blob/main/CONTRIBUTING.md"

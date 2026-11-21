@@ -1,0 +1,305 @@
+name: Site
+
+# leanmachinelearning.org/library: LML, LMLExplore and Statlib, to discover in words and review,
+# built with the LeanTrustBuilders tools.
+#   check    picks LMLExplore's commit, that of its newest dataset release, so that a review filed from
+#            the site names a commit whose dataset LMLExplore's store has; and decides what to do:
+#            extract when this repository has no dataset of that commit yet, build the site when
+#            something it shows moved (the commit, or an evidence store);
+#   extract  builds LMLExplore's workspace, LML and Statlib whole, and extracts the three libraries as
+#            one dataset (trust-extract with three roots);
+#   site     publishes the dataset as the release dataset-<commit12> of this repository (or takes the
+#            one published already), gathers the roadmaps, the literature annotations, the papers and
+#            the evidence stores, and builds the site with referee-site;
+#   deploy   deploys it to GitHub Pages;
+#   prune    deletes the dataset releases no build needs any more.
+#
+# The split is the security boundary: Lean runs code at elaboration time, so the job that builds and
+# imports the libraries holds only a read token, and the jobs that write run no Lean.
+
+on:
+  schedule:
+    # After LMLExplore's own dataset (its build starts at 05:17 and 17:17 UTC and takes half an hour).
+    - cron: '7 6,18 * * *'
+    # Every hour: the site again when a review was filed since (an evidence store moved).
+    - cron: '37 * * * *'
+  workflow_dispatch:
+    inputs:
+      extract:
+        description: Extract the dataset again even when this commit's is published already
+        type: boolean
+        default: false
+
+permissions: {}
+
+concurrency:
+  group: site
+  cancel-in-progress: false
+
+env:
+  STORES: LeanMachineLearning/LMLExplore-evidence LeanMachineLearning/LML-evidence LeanTrustBuilders/mathlib-probability-evidence
+
+jobs:
+  check:
+    if: github.repository == 'LeanMachineLearning/library'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      commit: ${{ steps.check.outputs.commit }}
+      extract: ${{ steps.check.outputs.extract }}
+      build: ${{ steps.check.outputs.build }}
+      heads: ${{ steps.check.outputs.heads }}
+    steps:
+      - id: check
+        env:
+          GH_TOKEN: ${{ github.token }}
+          FORCE: ${{ inputs.extract && 'true' || 'false' }}
+          HOURLY: ${{ github.event.schedule == '37 * * * *' && 'true' || 'false' }}
+        run: |
+          set -euo pipefail
+          tag=$(gh release list -R LeanMachineLearning/LMLExplore --limit 60 --json tagName,createdAt \
+            --jq '[.[] | select(.tagName | startswith("dataset-"))] | sort_by(.createdAt) | last | .tagName')
+          [ -n "$tag" ] || { echo "::error::LMLExplore has no dataset release"; exit 1; }
+          commit=$(gh api "repos/LeanMachineLearning/LMLExplore/commits/${tag#dataset-}" --jq .sha)
+          echo "commit=$commit" >> "$GITHUB_OUTPUT"
+          if [ "$FORCE" != true ] && gh release view "dataset-${commit:0:12}" -R "$GITHUB_REPOSITORY" > /dev/null 2>&1; then
+            extract=false
+          else
+            extract=true
+          fi
+          echo "extract=$extract" >> "$GITHUB_OUTPUT"
+          heads=$(for s in $STORES; do printf '%s=%s ' "$s" "$(gh api "repos/$s/commits/HEAD" --jq .sha)"; done)
+          echo "heads=$heads" >> "$GITHUB_OUTPUT"
+          # The hourly run builds only when something moved since the site deployed.
+          build=true
+          if [ "$HOURLY" = true ] && [ "$extract" = false ]; then
+            deployed=$(curl -sf https://leanmachinelearning.org/library/data/build.json || echo '{}')
+            now=$(python3 -c "import json,sys; print(json.dumps({'commit': sys.argv[1], 'stores': dict(h.split('=') for h in sys.argv[2].split())}, sort_keys=True))" "$commit" "$heads")
+            was=$(python3 -c "import json,sys; d=json.loads(sys.argv[1]); print(json.dumps({'commit': d.get('commit'), 'stores': d.get('stores', {})}, sort_keys=True))" "$deployed")
+            [ "$now" != "$was" ] || build=false
+          fi
+          echo "build=$build" >> "$GITHUB_OUTPUT"
+          echo "LMLExplore at ${commit:0:12}; extract: $extract; build: $build"
+
+  extract:
+    needs: check
+    if: needs.check.outputs.extract == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    permissions:
+      contents: read
+    outputs:
+      version: ${{ steps.extract.outputs.version }}
+    steps:
+      # This job builds and imports every module of the three libraries: no credentials anywhere.
+      - name: Check out LMLExplore at the commit
+        env:
+          COMMIT: ${{ needs.check.outputs.commit }}
+        run: |
+          set -euo pipefail
+          git init -q lmlexplore
+          git -C lmlexplore fetch -q --depth 1 https://github.com/LeanMachineLearning/LMLExplore "$COMMIT"
+          git -C lmlexplore checkout -q FETCH_HEAD
+
+      # The same pinned elan as LMLExplore's CI.
+      - name: Install elan (pinned + checksum) and the toolchain
+        env:
+          ELAN_SHA256: df0b2b3a439961ffcbb3985214365ffe40f49bc871df04dff268c7d8e21ca8b2
+          ELAN_VER: v4.2.3
+        run: |
+          set -euo pipefail
+          curl -sSL -H "Accept: application/octet-stream" \
+            "https://github.com/leanprover/elan/releases/download/${ELAN_VER}/elan-x86_64-unknown-linux-gnu.tar.gz" -o elan.tar.gz
+          echo "${ELAN_SHA256}  elan.tar.gz" | sha256sum -c -
+          tar -xzf elan.tar.gz elan-init
+          ./elan-init -y --default-toolchain none
+          rm -f elan.tar.gz elan-init
+          echo "$HOME/.elan/bin" >> "$GITHUB_PATH"
+          export PATH="$HOME/.elan/bin:$PATH"
+          elan toolchain install "$(cat lmlexplore/lean-toolchain)"
+
+      # Mathlib's and Tau Ceti's prebuilt files, then LMLExplore, and LML and Statlib whole: building
+      # LMLExplore compiles only the modules of theirs it imports.
+      - name: Build
+        working-directory: lmlexplore
+        run: bash scripts/build.sh LMLExplore LeanMachineLearning Statlib
+
+      - name: Extract the three libraries as one dataset
+        id: extract
+        uses: LeanTrustBuilders/extractor/extract@cefdb84357ce55fad562401de719adef1d836e01
+        with:
+          root: LMLExplore LeanMachineLearning Statlib
+          repo: LeanMachineLearning/LMLExplore
+          directory: lmlexplore
+          args: --upstream-closure term --parts 2
+          check: meaning
+
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: dataset
+          path: ${{ steps.extract.outputs.dataset }}
+          if-no-files-found: error
+          retention-days: 1
+
+  site:
+    needs: [check, extract]
+    # Also when extract was skipped: the site is then built from the dataset published already.
+    if: ${{ !cancelled() && needs.check.result == 'success' && needs.check.outputs.build == 'true' && (needs.extract.result == 'success' || needs.extract.result == 'skipped') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    permissions:
+      contents: write   # the dataset's release
+    env:
+      COMMIT: ${{ needs.check.outputs.commit }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+
+      - if: needs.extract.result == 'success'
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: dataset
+          path: ${{ runner.temp }}/dataset
+
+      - name: Publish the dataset as the release dataset-<commit12>
+        if: needs.extract.result == 'success'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          DATASET: ${{ runner.temp }}/dataset
+          VERSION: ${{ needs.extract.outputs.version }}
+        run: |
+          set -euo pipefail
+          tag="dataset-${COMMIT:0:12}"
+          tar -czf "$RUNNER_TEMP/dataset.tar.gz" -C "$DATASET" .
+          read -r spec commit < <(python3 -c "import json,sys; m=json.load(open(sys.argv[1])); print(m['spec'], m['library'].get('commit',''))" "$DATASET/meta.json")
+          [ "$commit" = "$COMMIT" ] || { echo "::error::the dataset is of $commit, not $COMMIT"; exit 1; }
+          notes="The dataset (S2, $spec) of LMLExplore, LML and Statlib at LMLExplore $COMMIT, by $VERSION (LeanTrustBuilders/extractor)."
+          if gh release view "$tag" > /dev/null 2>&1; then
+            gh release upload "$tag" "$RUNNER_TEMP/dataset.tar.gz" --clobber
+            gh release edit "$tag" --notes "$notes"
+          else
+            gh release create "$tag" "$RUNNER_TEMP/dataset.tar.gz" --latest=false \
+              --title "LML, LMLExplore and Statlib at LMLExplore ${COMMIT:0:12}" --notes "$notes"
+          fi
+
+      - name: Take the dataset published already for this commit
+        if: needs.extract.result == 'skipped'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          DATASET: ${{ runner.temp }}/dataset
+        run: |
+          set -euo pipefail
+          mkdir -p "$DATASET"
+          gh release download "dataset-${COMMIT:0:12}" -R "$GITHUB_REPOSITORY" -p dataset.tar.gz -D "$RUNNER_TEMP"
+          tar -xzf "$RUNNER_TEMP/dataset.tar.gz" -C "$DATASET"
+
+      # The sources the pages quote: LMLExplore at the commit, and LML and Statlib at the revisions
+      # its manifest pins, where the extractor found them (.lake/packages).
+      - name: Check out the sources
+        run: |
+          set -euo pipefail
+          src="$RUNNER_TEMP/lmlexplore"
+          git init -q "$src"
+          git -C "$src" fetch -q --depth 1 https://github.com/LeanMachineLearning/LMLExplore "$COMMIT"
+          git -C "$src" checkout -q FETCH_HEAD
+          python3 - "$src" <<'PY'
+          import json, subprocess, sys
+          from pathlib import Path
+          src = Path(sys.argv[1])
+          for p in json.loads((src / "lake-manifest.json").read_text())["packages"]:
+              if p["name"] in ("LeanMachineLearning", "Statlib"):
+                  d = src / ".lake" / "packages" / p["name"]
+                  subprocess.run(["git", "init", "-q", str(d)], check=True)
+                  subprocess.run(["git", "-C", str(d), "fetch", "-q", "--depth", "1", p["url"], p["rev"]], check=True)
+                  subprocess.run(["git", "-C", str(d), "checkout", "-q", "FETCH_HEAD"], check=True)
+          PY
+          git init -q "$RUNNER_TEMP/LMLRoadmaps"
+          git -C "$RUNNER_TEMP/LMLRoadmaps" fetch -q --depth 1 https://github.com/LeanMachineLearning/LMLRoadmaps main
+          git -C "$RUNNER_TEMP/LMLRoadmaps" checkout -q FETCH_HEAD
+
+      - name: Install referee-site
+        run: |
+          python3 -m venv "$RUNNER_TEMP/venv"
+          "$RUNNER_TEMP/venv/bin/pip" install --quiet "referee-site @ git+https://github.com/LeanTrustBuilders/referee-site@v0.14.1"
+
+      # The roadmaps, as plans; the literature annotations, from LMLExplore's own script run on the
+      # three libraries' dataset (its published ones if that fails); the papers, as LMLExplore's site
+      # publishes them; the evidence stores, LMLExplore's and the ones it imports.
+      - name: Gather the context and the evidence
+        env:
+          DATASET: ${{ runner.temp }}/dataset
+        run: |
+          set -euo pipefail
+          ctx="$RUNNER_TEMP/context"; mkdir -p "$ctx"
+          roadmaps=$(git -C "$RUNNER_TEMP/LMLRoadmaps" rev-parse HEAD)
+          python3 scripts/roadmaps.py --roadmaps "$RUNNER_TEMP/LMLRoadmaps" --out "$ctx/plans.json" --commit "$roadmaps"
+          src="$RUNNER_TEMP/lmlexplore"
+          if ! python3 "$src/scripts/literature/annotations.py" --dataset "$DATASET" \
+              --bibliography "$src/scripts/literature/bibliography.json" --out "$ctx/literature" \
+              --roadmaps "$RUNNER_TEMP/LMLRoadmaps" --roadmaps-commit "$roadmaps"; then
+            echo "::warning::LMLExplore's annotations.py failed on the dataset: taking its published annotations"
+            mkdir -p "$ctx/literature"
+            curl -sSf -o "$ctx/literature/annotations.jsonl" https://leanmachinelearning.org/LMLExplore/literature/annotations.jsonl
+          fi
+          curl -sSf -o "$ctx/papers.json" https://leanmachinelearning.org/LMLExplore/papers/papers.json || echo '[]' > "$ctx/papers.json"
+          git clone -q --depth 1 https://github.com/LeanMachineLearning/LMLExplore-evidence "$RUNNER_TEMP/store"
+          "$RUNNER_TEMP/venv/bin/evidence-store" fetch-imports --store "$RUNNER_TEMP/store/evidence" --out "$RUNNER_TEMP/imports"
+
+      - name: Build the site
+        env:
+          DATASET: ${{ runner.temp }}/dataset
+          HEADS: ${{ needs.check.outputs.heads }}
+        run: |
+          set -euo pipefail
+          ctx="$RUNNER_TEMP/context"
+          "$RUNNER_TEMP/venv/bin/referee-site" library --config site.toml --dataset "$DATASET" --out "$RUNNER_TEMP/site" \
+            --source "$RUNNER_TEMP/lmlexplore" --evidence "$RUNNER_TEMP/store/evidence" --imports "$RUNNER_TEMP/imports" \
+            --literature "$ctx/literature/annotations.jsonl" --papers "$ctx/papers.json" --plans "$ctx/plans.json" \
+            | tee -a "$GITHUB_STEP_SUMMARY"
+          # What this build is of, for the hourly check.
+          python3 -c "import json,sys; json.dump({'commit': sys.argv[1], 'stores': dict(h.split('=') for h in sys.argv[2].split())}, open(sys.argv[3], 'w'), sort_keys=True)" \
+            "$COMMIT" "$HEADS" "$RUNNER_TEMP/site/data/build.json"
+          du -sh "$RUNNER_TEMP/site"
+
+      - uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
+        with:
+          path: ${{ runner.temp }}/site
+
+  deploy:
+    needs: site
+    if: ${{ !cancelled() && needs.site.result == 'success' }}
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5.0.1
+
+  # The dataset releases kept: the newest three, and those of the last fourteen days.
+  prune:
+    needs: site
+    if: ${{ !cancelled() && needs.site.result == 'success' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Delete the dataset releases no build needs any more
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: python3 {0}
+        run: |
+          import json, os, subprocess
+          from datetime import datetime, timedelta, timezone
+          repo = os.environ["GITHUB_REPOSITORY"]
+          out = subprocess.run(["gh", "release", "list", "-R", repo, "--limit", "1000", "--json", "tagName,createdAt"],
+                               check=True, capture_output=True, text=True).stdout
+          datasets = sorted((r for r in json.loads(out) if r["tagName"].startswith("dataset-")), key=lambda r: r["createdAt"])
+          cutoff = datetime.now(timezone.utc) - timedelta(days=14)
+          for r in datasets[:-3]:
+              if datetime.fromisoformat(r["createdAt"].replace("Z", "+00:00")) < cutoff:
+                  print("deleting", r["tagName"])
+                  subprocess.run(["gh", "release", "delete", r["tagName"], "-R", repo, "--cleanup-tag", "--yes"], check=True)

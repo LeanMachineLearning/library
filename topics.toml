@@ -1,0 +1,349 @@
+# The topics of leanmachinelearning.org/library: which folders of LML, LMLExplore and Statlib make
+# up each subject. Drafted from the folders, module titles and roadmaps; correct it freely. The
+# titles and summaries are shown on the site as written here.
+#
+# Each [[topic]]:
+#   id        a short name, used by `parent` and in the site's addresses
+#   title     as the site shows it
+#   section   on the home page: "learning", "statistics" or "tools" (top-level topics only;
+#             a subtopic is shown in its parent's section)
+#   parent    the id of the topic it belongs to, if any
+#   featured  also shown on the home page, though it has a parent
+#   summary   one line, for the topic's card
+#   synonyms  what readers may search for
+#   roadmap   its roadmap: a directory of LMLRoadmaps
+#   folders   for each library (LML, LMLExplore, Statlib), paths relative to the library's root
+#             (LeanMachineLearning/, LMLExplore/, Statlib/): folders, or single files without .lean.
+#             A file belongs to the topic with the longest path that contains it, so a subfolder or
+#             a file can go to a more specific topic than its folder.
+
+# ───────────────────────── Learning ─────────────────────────
+
+[[topic]]
+id = "sequential-learning"
+title = "Sequential learning"
+section = "learning"
+summary = "Algorithms, environments and histories: the probability space of a learner interacting with its environment."
+synonyms = ["algorithm-environment interaction", "histories", "policies", "online decision making"]
+folders = { LML = ["SequentialLearning"], LMLExplore = ["SequentialLearning"] }
+
+[[topic]]
+id = "bandits"
+title = "Bandits"
+section = "learning"
+summary = "Algorithms that choose among arms to maximize their reward, and bounds on their regret."
+synonyms = ["multi-armed bandits", "regret", "exploration and exploitation"]
+roadmap = "Bandits"
+folders = { LML = ["Online/Bandit"], LMLExplore = ["Bandits"] }
+
+[[topic]]
+id = "stochastic-bandits"
+title = "Stochastic bandits"
+parent = "bandits"
+summary = "UCB, KL-UCB, MOSS and explore-then-commit, their regret and asymptotic optimality, and the matching lower bounds."
+synonyms = ["UCB", "upper confidence bound", "KL-UCB", "MOSS", "explore-then-commit", "ETC", "Lai–Robbins", "lower bound"]
+roadmap = "Bandits"
+folders = { LML = ["Online/Bandit/Algorithms/UCB", "Online/Bandit/Algorithms/ETC", "Online/Bandit/Algorithms/Regret/UCB", "Online/Bandit/Algorithms/Regret/ETC"], LMLExplore = ["Bandits/UCB", "Bandits/KLUCB", "Bandits/MOSS", "Bandits/AsymptoticallyOptimalUCB", "Bandits/AsymptoticOptimality", "Bandits/LaiRobbins", "Bandits/MinimaxLowerBound", "Bandits/InstanceDependentLowerBound", "Bandits/IndexAlgorithm", "Bandits/Concentration", "Bandits/Instances"] }
+
+[[topic]]
+id = "thompson-sampling"
+title = "Thompson sampling and Bayesian bandits"
+parent = "bandits"
+summary = "Thompson sampling for Gaussian, Bernoulli and Poisson arms, and Bayesian regret."
+synonyms = ["posterior sampling", "Bayesian regret", "Jeffreys prior"]
+roadmap = "Bandits"
+folders = { LML = ["Online/Bandit/Algorithms/TS", "Online/Bandit/Algorithms/Regret/BayesRegretTS", "Online/Bandit/BayesRegret"], LMLExplore = ["Bandits/ThompsonSampling"] }
+
+[[topic]]
+id = "adversarial-bandits"
+title = "Adversarial bandits"
+parent = "bandits"
+summary = "Exp3, Exp4, Tsallis-INF and follow the perturbed leader, against oblivious and adaptive adversaries."
+synonyms = ["Exp3", "Exp4", "Tsallis-INF", "expert advice", "non-stochastic bandits", "best of both worlds", "importance weighting"]
+roadmap = "Bandits"
+folders = { LMLExplore = ["Bandits/Adversarial", "Bandits/Exp3", "Bandits/Exp4", "Bandits/TsallisINF", "Bandits/ImportanceWeighted", "Bandits/PerturbedLeader", "Bandits/StochasticMirrorDescent"] }
+
+[[topic]]
+id = "linear-bandits"
+title = "Linear bandits"
+parent = "bandits"
+summary = "Stochastic and adversarial linear bandits: OFUL, phased elimination with optimal designs, and their lower bounds."
+synonyms = ["OFUL", "LinUCB", "confidence ellipsoid", "optimal design", "Kiefer–Wolfowitz"]
+roadmap = "Bandits"
+folders = { LMLExplore = ["Bandits/LinearBandit", "Bandits/OFUL"] }
+
+[[topic]]
+id = "identification"
+title = "Bandit identification"
+parent = "bandits"
+featured = true
+summary = "Pure exploration: find the best arm, or answer another question about the arms, with fixed confidence or a fixed budget."
+synonyms = ["pure exploration", "best-arm identification", "BAI", "fixed confidence", "fixed budget", "Track-and-Stop", "sample complexity", "GLRT"]
+roadmap = "Identification"
+folders = { LML = ["SequentialLearning/IdentificationAlg"], LMLExplore = ["Identification"] }
+
+[[topic]]
+id = "online-learning"
+title = "Online learning"
+section = "learning"
+summary = "Online convex optimization: the regret of follow the regularized leader, mirror descent, exponential weights and parameter-free methods."
+synonyms = ["online convex optimization", "OCO", "regret", "prediction with expert advice", "Hedge"]
+roadmap = "OnlineLearning"
+folders = { LMLExplore = ["OnlineLearning"] }
+
+[[topic]]
+id = "ftrl-mirror-descent"
+title = "Follow the regularized leader and mirror descent"
+parent = "online-learning"
+summary = "FTRL, mirror descent and online gradient descent, with adaptive learning rates, exponential weights and AdaHedge."
+synonyms = ["FTRL", "online mirror descent", "OMD", "online gradient descent", "AdaGrad", "exponential weights", "AdaHedge", "optimistic"]
+roadmap = "OnlineLearning"
+folders = { LMLExplore = ["OnlineLearning/FTRL", "OnlineLearning/MirrorDescent", "OnlineLearning/SubgradientDescent", "OnlineLearning/ExponentialWeights", "OnlineLearning/ExponentiatedGradient", "OnlineLearning/AdaHedge", "OnlineLearning/AdaptiveRate", "OnlineLearning/LocalNorm"] }
+
+[[topic]]
+id = "parameter-free"
+title = "Coin betting and parameter-free learning"
+parent = "online-learning"
+summary = "Online learning without a tuned learning rate, through coin betting and the Krichevsky–Trofimov bettor."
+synonyms = ["coin betting", "Krichevsky–Trofimov", "unconstrained online learning", "parameter-free"]
+roadmap = "OnlineLearning"
+folders = { LMLExplore = ["OnlineLearning/CoinBetting", "OnlineLearning/ConstantFractionBettor", "OnlineLearning/ExpertsBetting", "OnlineLearning/KrichevskyTrofimov", "OnlineLearning/ParameterFree", "OnlineLearning/UnconstrainedLowerBound", "OnlineLearning/Reduction"] }
+
+[[topic]]
+id = "online-to-batch"
+title = "From online to batch learning"
+parent = "online-learning"
+summary = "Turning regret bounds into generalization bounds, and agnostic PAC learning from online learners."
+synonyms = ["online-to-batch conversion", "PAC learning", "generalization"]
+roadmap = "OnlineLearning"
+folders = { LMLExplore = ["OnlineLearning/OnlineToBatch"] }
+
+[[topic]]
+id = "mdp"
+title = "Markov decision processes"
+section = "learning"
+summary = "Bellman equations, value and policy iteration, for finite-horizon, discounted and episodic Markov decision processes."
+synonyms = ["MDP", "Bellman equation", "dynamic programming", "value iteration", "policy iteration", "planning"]
+roadmap = "ReinforcementLearning"
+folders = { LMLExplore = ["MarkovDecisionProcess", "Analysis/FixedPoint", "Probability/MarkovChain"] }
+
+[[topic]]
+id = "reinforcement-learning"
+title = "Reinforcement learning"
+section = "learning"
+summary = "Learning to control an unknown Markov decision process: Q-learning, temporal differences, policy gradients, generative models and episodic regret."
+synonyms = ["RL", "sample complexity", "episodic regret"]
+roadmap = "ReinforcementLearning"
+folders = { LMLExplore = ["ReinforcementLearning"] }
+
+[[topic]]
+id = "q-learning-td"
+title = "Q-learning and temporal differences"
+parent = "reinforcement-learning"
+summary = "Q-learning and TD learning, and the stochastic approximation theorems behind their convergence."
+synonyms = ["Q-learning", "TD(0)", "temporal-difference learning", "stochastic approximation", "Robbins–Monro"]
+roadmap = "ReinforcementLearning"
+folders = { LMLExplore = ["ReinforcementLearning/QLearning", "ReinforcementLearning/TemporalDifference", "Probability/StochasticApproximation"] }
+
+[[topic]]
+id = "generative-model"
+title = "Planning with a generative model"
+parent = "reinforcement-learning"
+summary = "How many samples of a simulator suffice to plan nearly optimally, with the matching lower bound."
+synonyms = ["generative model", "simulator", "model-based planning", "empirical MDP"]
+roadmap = "ReinforcementLearning"
+folders = { LMLExplore = ["ReinforcementLearning/Generative"] }
+
+[[topic]]
+id = "policy-gradient"
+title = "Policy gradients"
+parent = "reinforcement-learning"
+summary = "The policy gradient theorem, softmax policies and the natural policy gradient."
+synonyms = ["policy gradient theorem", "natural policy gradient", "softmax policies", "policy optimization"]
+roadmap = "ReinforcementLearning"
+folders = { LMLExplore = ["ReinforcementLearning/PolicyOptimization"] }
+
+# ───────────────────────── Statistics ─────────────────────────
+
+[[topic]]
+id = "e-values"
+title = "E-values and anytime-valid inference"
+section = "statistics"
+summary = "E-variables, e-processes and test supermartingales: tests and confidence sequences that stay valid whenever one stops."
+synonyms = ["e-values", "e-variables", "anytime-valid", "safe testing", "testing by betting", "confidence sequences"]
+roadmap = "EValues"
+folders = { Statlib = ["EValues"], LMLExplore = ["EValues"] }
+
+[[topic]]
+id = "e-processes"
+title = "E-processes and test supermartingales"
+parent = "e-values"
+summary = "Evidence that accumulates over time: e-processes, test supermartingales, betting, and what they can and cannot detect."
+synonyms = ["test martingale", "test supermartingale", "Ville's inequality", "universal inference", "likelihood ratio process", "betting"]
+roadmap = "EValues"
+folders = { LMLExplore = ["EValues/EProcess", "EValues/TestSupermartingale", "EValues/Betting", "EValues/PowerOne", "EValues/SubGaussian"] }
+
+[[topic]]
+id = "numeraire"
+title = "The numeraire and optimal growth"
+parent = "e-values"
+summary = "The log-optimal e-variable against a composite null, its existence, and how fast evidence can grow."
+synonyms = ["numeraire", "growth rate", "GRO", "log-optimal", "reverse information projection", "utility"]
+roadmap = "EValues"
+folders = { Statlib = ["EValues/Numeraire", "EValues/NumeraireExistence", "EValues/Product", "EValues/RIPr", "EValues/Utility"], LMLExplore = ["EValues/Numeraire", "EValues/BipolarRate", "EValues/ConstraintNull", "EValues/EffectiveSet", "EValues/TwoSample", "EValues/Utility"] }
+
+[[topic]]
+id = "e-multiple-testing"
+title = "Multiple testing with e-values"
+parent = "e-values"
+summary = "The e-BH procedure, the e-closure principle, and merging e-values."
+synonyms = ["e-BH", "false discovery rate", "FDR", "closure principle", "merging e-values"]
+roadmap = "EValues"
+folders = { LMLExplore = ["EValues/MultipleTesting", "EValues/Merging"] }
+
+[[topic]]
+id = "testing"
+title = "Hypothesis testing"
+section = "statistics"
+summary = "Simple binary hypothesis tests: their Bayes risk, lower bounds from divergences, sample complexity, and sequential tests."
+synonyms = ["binary hypothesis testing", "Bayes risk", "change of measure", "Fano's inequality", "sample complexity", "Wald's identity", "sequential test"]
+folders = { Statlib = ["Testing"] }
+
+[[topic]]
+id = "divergences"
+title = "Divergences"
+section = "statistics"
+summary = "Ways to measure how different two distributions are: f-divergences, Kullback–Leibler, Rényi, Hellinger, total variation, Chernoff."
+synonyms = ["statistical divergence", "distance between distributions", "data-processing inequality"]
+folders = { Statlib = ["Divergence"] }
+
+[[topic]]
+id = "kl"
+title = "Kullback–Leibler divergence"
+parent = "divergences"
+summary = "Relative entropy: its chain rule, data-processing inequality, and inequalities such as Bretagnolle–Huber."
+synonyms = ["relative entropy", "KL", "chain rule", "Bretagnolle–Huber", "Pinsker"]
+folders = { Statlib = ["Divergence/KullbackLeibler", "ForMathlib/InformationTheory"], LML = ["ForMathlib/InformationTheory"], LMLExplore = ["InformationTheory/KullbackLeibler"] }
+
+[[topic]]
+id = "f-divergences"
+title = "f-divergences and total variation"
+parent = "divergences"
+summary = "The general family of f-divergences, statistical information, and the total variation distance."
+synonyms = ["f-divergence", "statistical information", "total variation distance", "joint convexity"]
+folders = { Statlib = ["Divergence/FDiv", "Divergence/StatInfo", "Divergence/TotalVariation"] }
+
+[[topic]]
+id = "renyi-hellinger"
+title = "Rényi, Hellinger and Chernoff divergences"
+parent = "divergences"
+summary = "The Rényi divergences and their order, the Hellinger distance, the Chernoff and Jensen–Shannon divergences."
+synonyms = ["Rényi divergence", "Hellinger distance", "Chernoff divergence", "Jensen–Shannon", "tensorization"]
+folders = { Statlib = ["Divergence/Renyi", "Divergence/Hellinger", "Divergence/Chernoff", "Divergence/JensenShannon"] }
+
+[[topic]]
+id = "information-theory"
+title = "Information theory"
+section = "statistics"
+summary = "Mutual information, the method of types, Sanov's bound, and the Krichevsky–Trofimov mixture."
+synonyms = ["mutual information", "method of types", "Sanov's theorem", "Krichevsky–Trofimov", "universal coding"]
+folders = { Statlib = ["Divergence/MutualInformation"], LMLExplore = ["InformationTheory"] }
+
+[[topic]]
+id = "inference"
+title = "Statistical inference and decision theory"
+section = "statistics"
+summary = "Estimators and their risk, quadratic mean differentiability, contiguity, and potential responses."
+synonyms = ["estimation", "risk", "Bayes risk", "minimax risk", "quadratic mean differentiability", "contiguity", "causal inference", "potential outcomes"]
+folders = { Statlib = ["Inference", "Contiguity", "Causal"] }
+
+# ───────────────────────── Mathematical tools ─────────────────────────
+
+[[topic]]
+id = "probability"
+title = "Probability"
+section = "tools"
+summary = "Random variables and their laws, Markov kernels, conditioning, independence and exchangeability."
+synonyms = ["Markov kernel", "conditional distribution", "independence", "exchangeability", "product measure"]
+folders = { LML = ["ForMathlib/Probability"], Statlib = ["ForMathlib/Probability"], LMLExplore = ["Probability"] }
+
+[[topic]]
+id = "concentration"
+title = "Concentration inequalities"
+parent = "probability"
+featured = true
+summary = "How far sums of random variables stray from their mean: Hoeffding, Bernstein, Bennett, Chernoff bounds and large deviations."
+synonyms = ["Hoeffding", "Bernstein", "Bennett", "Chernoff bound", "sub-Gaussian", "moment generating function", "Cramér's theorem", "large deviations"]
+folders = { LMLExplore = ["Probability/Moments", "Probability/LargeDeviations"] }
+
+[[topic]]
+id = "martingales"
+title = "Martingales and stopping times"
+parent = "probability"
+summary = "Martingale inequalities (Azuma–Hoeffding, Freedman, Doob, Ville), self-normalized bounds, and stopped processes."
+synonyms = ["Azuma–Hoeffding", "Freedman's inequality", "Doob's inequality", "Ville's inequality", "stopping time", "self-normalized"]
+folders = { LMLExplore = ["Probability/Martingale", "Probability/Process"] }
+
+[[topic]]
+id = "distributions"
+title = "Distributions and exponential families"
+parent = "probability"
+summary = "Bernoulli, Gaussian, Poisson, exponential and Beta laws, and exponential families with their Cramér–Chernoff bounds."
+synonyms = ["exponential family", "Bernoulli", "Gaussian", "Poisson", "Beta", "natural parameter"]
+folders = { LMLExplore = ["Probability/Distributions"] }
+
+[[topic]]
+id = "measure-theory"
+title = "Measure and integration"
+section = "tools"
+summary = "Measures, integrals, Radon–Nikodym derivatives, conditional expectations and measurability."
+synonyms = ["Lebesgue integral", "Radon–Nikodym derivative", "conditional expectation", "measurability", "absolute continuity"]
+folders = { LML = ["ForMathlib/MeasureTheory"], Statlib = ["ForMathlib/MeasureTheory"], LMLExplore = ["MeasureTheory"] }
+
+[[topic]]
+id = "convex-analysis"
+title = "Convex analysis and optimization"
+section = "tools"
+summary = "Convex functions, conjugates, Bregman divergences, subgradients and saddle points, as online learning and statistics use them."
+synonyms = ["Bregman divergence", "convex conjugate", "Fenchel duality", "subgradient", "strong convexity", "Jensen's inequality", "saddle point"]
+folders = { LML = ["ForMathlib/Analysis"], LMLExplore = ["Analysis/Convex", "Optimization", "Geometry/Convex"] }
+
+[[topic]]
+id = "linear-algebra"
+title = "Least squares and optimal designs"
+section = "tools"
+summary = "Regularized least squares, design matrices, the elliptical potential lemma and Kiefer–Wolfowitz optimal designs."
+synonyms = ["ridge regression", "least squares", "elliptical potential lemma", "optimal design", "Kiefer–Wolfowitz", "Moore–Penrose inverse", "matrices"]
+folders = { LMLExplore = ["Analysis/InnerProductSpace", "Analysis/Matrix", "Analysis/CStarAlgebra", "LinearAlgebra"] }
+
+[[topic]]
+id = "real-analysis"
+title = "Real analysis and inequalities"
+section = "tools"
+summary = "Elementary inequalities, the logarithm and exponential, special functions, sums and asymptotics."
+synonyms = ["inequalities", "logarithm", "exponential", "Gamma function", "Lambert function", "harmonic numbers", "asymptotics", "series"]
+folders = { LMLExplore = ["Analysis", "Algebra", "NumberTheory"], Statlib = ["ForMathlib/Analysis"] }
+
+[[topic]]
+id = "topology-order"
+title = "Topology and order"
+section = "tools"
+summary = "Semicontinuity and Berge's maximum theorem, von Neumann's minimax theorem, contractions, suprema and infima."
+synonyms = ["semicontinuity", "Berge's maximum theorem", "minimax theorem", "contraction", "fixed point", "suprema"]
+folders = { LMLExplore = ["Topology", "Order"], LML = ["ForMathlib/Order"], Statlib = ["ForMathlib/Topology"] }
+
+[[topic]]
+id = "basics"
+title = "Numbers, sets and extended reals"
+section = "tools"
+summary = "Extended reals and natural numbers, finite sets, counting and binomial coefficients."
+synonyms = ["ENNReal", "EReal", "extended reals", "finite sets", "binomial coefficients"]
+folders = { LMLExplore = ["Basic", "Data", "Logic"], LML = ["ForMathlib/Basic"], Statlib = ["ForMathlib"] }
+
+[[topic]]
+id = "tactics"
+title = "Tactics"
+section = "tools"
+summary = "Tactics for Markov kernels: lifting equalities of kernels, and reasoning with kernel morphisms."
+synonyms = ["lift_eq", "kernel_hom", "automation", "metaprogramming"]
+folders = { LML = ["Tactic"] }
