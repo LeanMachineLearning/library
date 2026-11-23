@@ -37,7 +37,7 @@ command line.
 ## Building it locally
 
 ```bash
-pip install "referee-site @ git+https://github.com/LeanTrustBuilders/referee-site@v0.14.5"
+pip install "referee-site @ git+https://github.com/LeanTrustBuilders/referee-site@v0.14.6"
 python3 scripts/roadmaps.py --roadmaps path/to/LMLRoadmaps --out plans.json
 referee-site library --config site.toml --dataset DATASET --source path/to/LMLExplore --out site/ \
   --evidence path/to/LMLExplore-evidence/evidence --imports IMPORTS \
